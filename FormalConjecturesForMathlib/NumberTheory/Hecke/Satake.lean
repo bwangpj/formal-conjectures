@@ -17,6 +17,7 @@ module
 
 public import Mathlib.Analysis.Complex.Polynomial.Basic
 public import Mathlib.Algebra.Polynomial.Roots
+public import Mathlib.Data.Sym.Card
 
 @[expose] public section
 
@@ -207,6 +208,78 @@ theorem zero_notMem_symPowTransfer {k : ℕ} {α β : ℂ} (hα : α ≠ 0) (hβ
   rcases mul_eq_zero.mp hi with h | h
   · exact absurd h (pow_ne_zero _ hα)
   · exact absurd h (pow_ne_zero _ hβ)
+
+/-- Reflecting `{0, …, n}` about its midpoint permutes it. -/
+theorem _root_.Multiset.range_map_sub (n : ℕ) :
+    (Multiset.range (n + 1)).map (fun i => n - i) = Multiset.range (n + 1) := by
+  have h : (List.range (n + 1)).map (fun i => n - i) = (List.range (n + 1)).reverse := by
+    rw [List.range_eq_range', List.reverse_range', ← List.range_eq_range']
+    congr 1
+    funext i
+    omega
+  calc (Multiset.range (n + 1)).map (fun i => n - i)
+      = ↑((List.range (n + 1)).map fun i => n - i) := by rw [Multiset.range, Multiset.map_coe]
+    _ = ↑((List.range (n + 1)).reverse) := by rw [h]
+    _ = Multiset.range (n + 1) := Multiset.coe_reverse _
+
+/-- The symmetric power transfer does not depend on the ordering of the two parameters:
+reindexing `i ↦ k - i` swaps the roles of `α` and `β`. So it is well defined on the
+*unordered* pair of Satake parameters of an eigenform on `GL 2`, as a transfer of semisimple
+conjugacy classes should be. -/
+theorem symPowTransfer_comm (k : ℕ) (α β : ℂ) :
+    symPowTransfer k α β = symPowTransfer k β α := by
+  rw [symPowTransfer, symPowTransfer]
+  conv_rhs => rw [← Multiset.range_map_sub k, Multiset.map_map]
+  refine Multiset.map_congr rfl fun i hi => ?_
+  rw [Multiset.mem_range] at hi
+  have hki : k - (k - i) = i := by omega
+  simp only [Function.comp_apply, hki]
+  ring
+
+/-- Transfer of Satake parameters along the `k`-th symmetric power
+`GL m ℂ → GL ((m + k - 1).choose k) ℂ`, the parameters given as an indexed family
+`α : Fin m → ℂ`: the monomials of degree `k` in the parameters, one for each unordered
+`k`-tuple of indices. By `symPowTransferFamily_comp_perm` the result depends only on the
+multiset of parameters, so this is well defined on semisimple conjugacy classes; for `m = 2`
+it is the transfer of `symPowTransfer`. -/
+noncomputable def symPowTransferFamily {m : ℕ} (k : ℕ) (α : Fin m → ℂ) : Multiset ℂ :=
+  (Finset.univ : Finset (Sym (Fin m) k)).val.map fun s : Sym (Fin m) k =>
+    ((s : Multiset (Fin m)).map α).prod
+
+/-- The `k`-th symmetric power of `GL m` lands in `GL ((m + k - 1).choose k)`: there are
+`multichoose m k` monomials of degree `k` in `m` variables. -/
+@[simp]
+theorem card_symPowTransferFamily {m : ℕ} (k : ℕ) (α : Fin m → ℂ) :
+    Multiset.card (symPowTransferFamily k α) = (m + k - 1).choose k := by
+  rw [symPowTransferFamily, Multiset.card_map, ← Finset.card_def, Finset.card_univ,
+    Sym.card_sym_eq_choose, Fintype.card_fin]
+
+theorem zero_notMem_symPowTransferFamily {m k : ℕ} {α : Fin m → ℂ} (hα : ∀ j, α j ≠ 0) :
+    (0 : ℂ) ∉ symPowTransferFamily k α := by
+  intro hmem
+  rw [symPowTransferFamily, Multiset.mem_map] at hmem
+  obtain ⟨s, -, hs⟩ := hmem
+  refine Multiset.prod_ne_zero ?_ hs
+  intro h0
+  rw [Multiset.mem_map] at h0
+  obtain ⟨j, -, hj⟩ := h0
+  exact hα j hj
+
+/-- The symmetric power transfer depends only on the *multiset* of parameters: reindexing
+the family by a permutation leaves it unchanged, since it just permutes the monomials. -/
+theorem symPowTransferFamily_comp_perm {m k : ℕ} (α : Fin m → ℂ) (σ : Equiv.Perm (Fin m)) :
+    symPowTransferFamily k (α ∘ σ) = symPowTransferFamily k α := by
+  rw [symPowTransferFamily, symPowTransferFamily]
+  have he : ((Finset.univ : Finset (Sym (Fin m) k)).val.map (Sym.equivCongr σ))
+      = (Finset.univ : Finset (Sym (Fin m) k)).val := by
+    have h := congrArg Finset.val (Finset.map_univ_equiv (Sym.equivCongr σ (n := k)))
+    rw [Finset.map_val, Equiv.coe_toEmbedding] at h
+    exact h
+  conv_rhs => rw [← he, Multiset.map_map]
+  refine Multiset.map_congr rfl fun s _ => ?_
+  show ((s : Multiset (Fin m)).map (α ∘ σ)).prod
+    = (((Sym.map σ s : Sym (Fin m) k) : Multiset (Fin m)).map α).prod
+  rw [Sym.coe_map, Multiset.map_map]
 
 /-- Transfer of Satake parameters along the `k`-th exterior power
 `GL n ℂ → GL (n.choose k) ℂ`: the products of the parameters over the `k`-element

@@ -76,6 +76,26 @@ theorem singleAt_apply_of_ne {v w : HeightOneSpectrum R} (hw : w ≠ v)
 @[simp] theorem mul_apply (a b : 𝔸ᶠ[R, K]) (v : HeightOneSpectrum R) :
     (a * b) v = a v * b v := rfl
 
+@[simp] theorem one_apply (v : HeightOneSpectrum R) : (1 : 𝔸ᶠ[R, K]) v = 1 := rfl
+
+@[simp] theorem zero_apply (v : HeightOneSpectrum R) : (0 : 𝔸ᶠ[R, K]) v = 0 := rfl
+
+@[simp] theorem add_apply (a b : 𝔸ᶠ[R, K]) (v : HeightOneSpectrum R) :
+    (a + b) v = a v + b v := rfl
+
+variable (R K) in
+/-- Evaluation of a finite adele at the place `v`, as a ring homomorphism. -/
+def evalRingHom (v : HeightOneSpectrum R) : 𝔸ᶠ[R, K] →+* v.adicCompletion K where
+  toFun a := a v
+  map_one' := rfl
+  map_mul' _ _ := rfl
+  map_zero' := rfl
+  map_add' _ _ := rfl
+
+theorem sum_apply {ι : Type*} (s : Finset ι) (f : ι → 𝔸ᶠ[R, K]) (v : HeightOneSpectrum R) :
+    (∑ i ∈ s, f i) v = ∑ i ∈ s, f i v :=
+  map_sum (evalRingHom R K v) f s
+
 open scoped Classical in
 /-- The matrix over `𝔸ᶠ` equal to `M` at `v` and to the identity matrix elsewhere. -/
 noncomputable def localMatrix (v : HeightOneSpectrum R)
@@ -95,5 +115,45 @@ theorem localMatrix_apply_of_ne {v w : HeightOneSpectrum R} (hw : w ≠ v)
   classical
   rw [localMatrix, Matrix.of_apply, singleAt_apply_of_ne hw, Matrix.one_apply]
   split <;> simp
+
+omit [Fintype n] in
+theorem localMatrix_one (v : HeightOneSpectrum R) :
+    localMatrix v (1 : Matrix n n (v.adicCompletion K)) = 1 := by
+  ext i j w
+  rcases eq_or_ne w v with rfl | hw
+  · rw [localMatrix_apply_self, Matrix.one_apply, Matrix.one_apply,
+      apply_ite (fun x : 𝔸ᶠ[R, K] => x w), one_apply, zero_apply]
+  · rw [localMatrix_apply_of_ne hw, Matrix.one_apply, Matrix.one_apply,
+      apply_ite (fun x : 𝔸ᶠ[R, K] => x w), one_apply, zero_apply]
+
+theorem localMatrix_mul (v : HeightOneSpectrum R)
+    (M N : Matrix n n (v.adicCompletion K)) :
+    localMatrix v (M * N) = localMatrix v M * localMatrix v N := by
+  ext i j w
+  rw [Matrix.mul_apply, sum_apply]
+  rcases eq_or_ne w v with rfl | hw
+  · rw [localMatrix_apply_self, Matrix.mul_apply]
+    simp only [mul_apply, localMatrix_apply_self]
+  · rw [localMatrix_apply_of_ne hw]
+    simp only [mul_apply, localMatrix_apply_of_ne hw]
+    rw [← Matrix.mul_apply, one_mul]
+
+/-- **The local embedding of general linear groups**: the group homomorphism
+`GL n K_v →* GL n 𝔸ᶠ` placing a local matrix at the place `v` and the identity matrix at
+every other place. It is not induced by a ring homomorphism `K_v → 𝔸ᶠ`, but it is
+multiplicative because the off-`v` components are all the identity matrix. -/
+noncomputable def localGL (v : HeightOneSpectrum R) :
+    GL n (v.adicCompletion K) →* GL n 𝔸ᶠ[R, K] where
+  toFun g :=
+    ⟨localMatrix v g.val, localMatrix v g.inv,
+      by rw [← localMatrix_mul, g.val_inv, localMatrix_one],
+      by rw [← localMatrix_mul, g.inv_val, localMatrix_one]⟩
+  map_one' := Units.ext (localMatrix_one v)
+  map_mul' g h := Units.ext (localMatrix_mul v g.val h.val)
+
+@[simp]
+theorem coe_localGL (v : HeightOneSpectrum R) (g : GL n (v.adicCompletion K)) :
+    (localGL v g : Matrix n n 𝔸ᶠ[R, K]) = localMatrix v (g : Matrix n n (v.adicCompletion K)) :=
+  rfl
 
 end IsDedekindDomain.FiniteAdeleRing
