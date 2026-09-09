@@ -156,7 +156,9 @@ public import FormalConjecturesForMathlib.NumberTheory.Divisors
 public import FormalConjecturesForMathlib.NumberTheory.Harmonic
 public import FormalConjecturesForMathlib.NumberTheory.Hecke.Basic
 public import FormalConjecturesForMathlib.NumberTheory.Hecke.GeneralLinearGroup
+public import FormalConjecturesForMathlib.NumberTheory.Hecke.LocalEmbedding
 public import FormalConjecturesForMathlib.NumberTheory.Hecke.Operator
+public import FormalConjecturesForMathlib.NumberTheory.Hecke.Padic
 public import FormalConjecturesForMathlib.NumberTheory.Hecke.Satake
 public import FormalConjecturesForMathlib.NumberTheory.Hecke.Spherical
 public import FormalConjecturesForMathlib.NumberTheory.Lacunary
