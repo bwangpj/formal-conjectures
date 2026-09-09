@@ -207,9 +207,6 @@ def main():
     # Written last so that the redirect page is not treated as a module page.
     create_root_index(literate_dir)
 
-    # Written last so that the redirect page is not treated as a module page.
-    create_root_index(literate_dir)
-
 
 if __name__ == '__main__':
     main()
