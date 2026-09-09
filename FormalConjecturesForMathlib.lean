@@ -135,6 +135,7 @@ public import FormalConjecturesForMathlib.Geometry.«3d»
 public import FormalConjecturesForMathlib.Lean.Elab.InfoTree.Util
 public import FormalConjecturesForMathlib.LinearAlgebra.AffineSpace.Simplex.Basic
 public import FormalConjecturesForMathlib.LinearAlgebra.GeneralLinearGroup
+public import FormalConjecturesForMathlib.LinearAlgebra.Matrix.SmithNormalForm
 public import FormalConjecturesForMathlib.LinearAlgebra.SpecialLinearGroup
 public import FormalConjecturesForMathlib.Logic.Equiv.Fin.Rotate
 public import FormalConjecturesForMathlib.NumberTheory.AdditionChain
@@ -153,6 +154,11 @@ public import FormalConjecturesForMathlib.NumberTheory.DiophantineApproximation.
 public import FormalConjecturesForMathlib.NumberTheory.DirichletCharacter.Basic
 public import FormalConjecturesForMathlib.NumberTheory.Divisors
 public import FormalConjecturesForMathlib.NumberTheory.Harmonic
+public import FormalConjecturesForMathlib.NumberTheory.Hecke.Basic
+public import FormalConjecturesForMathlib.NumberTheory.Hecke.GeneralLinearGroup
+public import FormalConjecturesForMathlib.NumberTheory.Hecke.Operator
+public import FormalConjecturesForMathlib.NumberTheory.Hecke.Satake
+public import FormalConjecturesForMathlib.NumberTheory.Hecke.Spherical
 public import FormalConjecturesForMathlib.NumberTheory.Lacunary
 public import FormalConjecturesForMathlib.NumberTheory.LegendreSymbol.Basic
 public import FormalConjecturesForMathlib.NumberTheory.NormalNumber
