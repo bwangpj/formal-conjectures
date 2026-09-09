@@ -47,9 +47,32 @@ the definition.
 ## Main declarations
 
 * `heckePolynomial`: the Hecke polynomial of an eigensystem.
-* `satakeParameters`: its roots, with multiplicity.
+* `satakeParameters`: its roots, with multiplicity, nonzero by
+  `zero_notMem_satakeParameters` and so a semisimple conjugacy class in `GL n ℂ`.
+* `tensorTransfer`, `symPowTransfer`, `extPowTransfer`: the effect on Satake parameters of the
+  tensor product, the symmetric power and the exterior power, three instances of the transfer
+  in the fifth question of Langlands.
+
+## Functoriality
+
+Question 5 of Langlands asks, for quasi-split `G` and `G'` over a global field and a complex
+analytic homomorphism of `L`-groups over the Galois group, whether an automorphic `π'` on `G'`
+transfers to an automorphic `π` on `G` whose local components correspond under the induced local
+homomorphisms. For general linear groups the transfer is visible entirely on Satake parameters:
+the dual group of `GL n` is `GL n ℂ`, in which a semisimple conjugacy class is exactly an
+unordered tuple of nonzero complex numbers, so an `L`-homomorphism acts as a map of multisets
+and no `L`-group need be constructed. `tensorTransfer`, `symPowTransfer` and `extPowTransfer` are three standard
+instances.
+
+Langlands notes there that the case `G' = {1}`, `G = GL(1)` of the fourth and fifth questions is
+the Artin reciprocity law, so reciprocity is a special case of Question 5 rather than a separate
+conjecture.
 
 *References:*
+ - R. P. Langlands, *Problems in the theory of automorphic forms*, in Lectures in Modern
+   Analysis and Applications III, Lecture Notes in Math. 170, Springer (1970), 18-61;
+   Question 5 is global functoriality.
+   https://publications.ias.edu/sites/default/files/problems-in-the-theory-of-automorphic-forms.pdf
  - I. Satake, *Theory of spherical functions on reductive algebraic groups over p-adic fields*,
    Publ. Math. IHÉS 18 (1963), 5-69
  - [J. R. Getz and H. Hahn, *An Introduction to Automorphic Representations*, GTM 300
@@ -110,5 +133,104 @@ theorem card_satakeParameters {p : ℕ} {a : Fin (n + 1) → ℂ} (ha : a 0 = 1)
   rw [satakeParameters,
     (Polynomial.splits_iff_card_roots.mp (IsAlgClosed.splits _)),
     natDegree_heckePolynomial ha]
+
+@[simp]
+theorem coeff_zero_heckePolynomial (p : ℕ) (a : Fin (n + 1) → ℂ) :
+    (heckePolynomial p a).coeff 0 = (-1) ^ n * (p : ℂ) ^ n.choose 2 * a (Fin.last n) := by
+  rw [heckePolynomial, finsetSum_coeff, Finset.sum_eq_single (Fin.last n)]
+  · simp only [Fin.val_last, Nat.sub_self, pow_zero, mul_one, coeff_C_zero]
+  · intro i _ hi
+    have hi' : (i : ℕ) ≠ n := fun h => hi (Fin.ext (by simpa using h))
+    have hne : n - (i : ℕ) ≠ 0 := by have := i.is_lt; omega
+    rw [coeff_C_mul, coeff_X_pow, if_neg (Ne.symm hne), mul_zero]
+  · simp
+
+/-- The Satake parameters are nonzero, so the multiset really is a semisimple conjugacy class
+in `GL n ℂ`. The hypothesis on the top eigenvalue holds for a spherical eigenvector, the
+corresponding Hecke operator being at a central and hence invertible element. -/
+theorem zero_notMem_satakeParameters {p : ℕ} {a : Fin (n + 1) → ℂ} (ha : a 0 = 1)
+    (hp : (p : ℂ) ≠ 0) (hlast : a (Fin.last n) ≠ 0) : (0 : ℂ) ∉ satakeParameters p a := by
+  intro hmem
+  rw [satakeParameters, mem_roots (monic_heckePolynomial ha).ne_zero] at hmem
+  have h0 : (heckePolynomial p a).coeff 0 = 0 := by
+    rw [coeff_zero_eq_eval_zero]
+    exact hmem
+  rw [coeff_zero_heckePolynomial] at h0
+  rcases mul_eq_zero.mp h0 with h | h
+  · rcases mul_eq_zero.mp h with h' | h'
+    · exact absurd h' (pow_ne_zero _ (neg_ne_zero.mpr one_ne_zero))
+    · exact absurd h' (pow_ne_zero _ hp)
+  · exact hlast h
+
+/-! ### Transfer of Satake parameters
+
+For `GL n` the dual group is `GL n ℂ`, and a semisimple conjugacy class in `GL n ℂ` is exactly
+an unordered `n`-tuple of nonzero complex numbers, which is exactly a multiset of Satake
+parameters. So an `L`-homomorphism between general linear groups acts on Satake parameters as
+an explicit operation on multisets, and the fifth question of Langlands can be stated for these
+groups without constructing `L`-groups at all. -/
+
+/-- Transfer of Satake parameters along the tensor product `GL n ℂ × GL m ℂ → GL (n * m) ℂ`:
+the Rankin-Selberg case. -/
+def tensorTransfer (α β : Multiset ℂ) : Multiset ℂ := α.bind fun x => β.map (x * ·)
+
+@[simp]
+theorem card_tensorTransfer (α β : Multiset ℂ) :
+    Multiset.card (tensorTransfer α β) = Multiset.card α * Multiset.card β := by
+  simp [tensorTransfer, Multiset.card_bind]
+
+theorem zero_notMem_tensorTransfer {α β : Multiset ℂ} (hα : (0 : ℂ) ∉ α) (hβ : (0 : ℂ) ∉ β) :
+    (0 : ℂ) ∉ tensorTransfer α β := by
+  intro hmem
+  rw [tensorTransfer, Multiset.mem_bind] at hmem
+  obtain ⟨x, hx, hmem'⟩ := hmem
+  rw [Multiset.mem_map] at hmem'
+  obtain ⟨y, hy, hxy⟩ := hmem'
+  rcases mul_eq_zero.mp hxy with h | h
+  · exact hα (h ▸ hx)
+  · exact hβ (h ▸ hy)
+
+/-- Transfer of Satake parameters along the `k`-th symmetric power `GL 2 ℂ → GL (k + 1) ℂ`. -/
+def symPowTransfer (k : ℕ) (α β : ℂ) : Multiset ℂ :=
+  (Multiset.range (k + 1)).map fun i => α ^ i * β ^ (k - i)
+
+@[simp]
+theorem card_symPowTransfer (k : ℕ) (α β : ℂ) :
+    Multiset.card (symPowTransfer k α β) = k + 1 := by
+  simp [symPowTransfer]
+
+theorem zero_notMem_symPowTransfer {k : ℕ} {α β : ℂ} (hα : α ≠ 0) (hβ : β ≠ 0) :
+    (0 : ℂ) ∉ symPowTransfer k α β := by
+  intro hmem
+  rw [symPowTransfer, Multiset.mem_map] at hmem
+  obtain ⟨i, -, hi⟩ := hmem
+  rcases mul_eq_zero.mp hi with h | h
+  · exact absurd h (pow_ne_zero _ hα)
+  · exact absurd h (pow_ne_zero _ hβ)
+
+/-- Transfer of Satake parameters along the `k`-th exterior power
+`GL n ℂ → GL (n.choose k) ℂ`: the products of the parameters over the `k`-element
+sub-multisets. -/
+def extPowTransfer (k : ℕ) (α : Multiset ℂ) : Multiset ℂ :=
+  (α.powersetCard k).map Multiset.prod
+
+@[simp]
+theorem card_extPowTransfer (k : ℕ) (α : Multiset ℂ) :
+    Multiset.card (extPowTransfer k α) = (Multiset.card α).choose k := by
+  simp [extPowTransfer]
+
+theorem zero_notMem_extPowTransfer {k : ℕ} {α : Multiset ℂ} (hα : (0 : ℂ) ∉ α) :
+    (0 : ℂ) ∉ extPowTransfer k α := by
+  intro hmem
+  rw [extPowTransfer, Multiset.mem_map] at hmem
+  obtain ⟨s, hs, hprod⟩ := hmem
+  have hsub : s ≤ α := (Multiset.mem_powersetCard.mp hs).1
+  exact Multiset.prod_ne_zero (fun h => hα (Multiset.mem_of_le hsub h)) hprod
+
+/-- The top exterior power is the determinant: `Λ ^ n` of an `n`-tuple of parameters is the
+single product of them all. -/
+theorem extPowTransfer_card (α : Multiset ℂ) :
+    extPowTransfer (Multiset.card α) α = {α.prod} := by
+  rw [extPowTransfer, Multiset.powersetCard_self, Multiset.map_singleton]
 
 end Satake
