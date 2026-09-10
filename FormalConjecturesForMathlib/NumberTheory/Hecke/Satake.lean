@@ -92,6 +92,30 @@ Satake parameters. -/
 noncomputable def heckePolynomial (p : ℕ) (a : Fin (n + 1) → ℂ) : ℂ[X] :=
   ∑ i : Fin (n + 1), C ((-1) ^ (i : ℕ) * (p : ℂ) ^ (i : ℕ).choose 2 * a i) * X ^ (n - (i : ℕ))
 
+/-- The Hecke polynomial of an eigensystem over an arbitrary commutative ring, with `q` the
+residue cardinality.
+
+Every power of `q` appearing here is a nonnegative integer power, so this is the *arithmetic*
+normalisation of Clozel and Gross rather than the one induced by the Satake isomorphism itself,
+which is twisted by half the sum of the positive roots and so involves a square root of `q`.
+Being integral, it transports along an arbitrary ring homomorphism
+(`heckePolynomialOver_map`), which is what comparing Hecke eigenvalues with Frobenius
+characteristic polynomials over a `p`-adic field requires. -/
+noncomputable def heckePolynomialOver {R : Type*} [CommRing R] (q : ℕ) (a : Fin (n + 1) → R) :
+    R[X] :=
+  ∑ i : Fin (n + 1), C ((-1) ^ (i : ℕ) * (q : R) ^ (i : ℕ).choose 2 * a i) * X ^ (n - (i : ℕ))
+
+/-- Over `ℂ` the two agree, so the exponents of `heckePolynomial` are exactly the arithmetic
+ones. -/
+theorem heckePolynomial_eq_heckePolynomialOver (p : ℕ) (a : Fin (n + 1) → ℂ) :
+    heckePolynomial p a = heckePolynomialOver p a := rfl
+
+/-- The arithmetically normalised Hecke polynomial transports along a ring homomorphism. -/
+theorem heckePolynomialOver_map {R S : Type*} [CommRing R] [CommRing S] (φ : R →+* S) (q : ℕ)
+    (a : Fin (n + 1) → R) :
+    (heckePolynomialOver q a).map φ = heckePolynomialOver q (fun i => φ (a i)) := by
+  simp [heckePolynomialOver, Polynomial.map_sum]
+
 theorem natDegree_heckePolynomial_le (p : ℕ) (a : Fin (n + 1) → ℂ) :
     (heckePolynomial p a).natDegree ≤ n :=
   natDegree_sum_le_of_forall_le _ _ fun _ _ =>
