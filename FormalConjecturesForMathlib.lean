@@ -157,6 +157,7 @@ public import FormalConjecturesForMathlib.NumberTheory.CoveringSystem
 public import FormalConjecturesForMathlib.NumberTheory.DiophantineApproximation.ZNumber
 public import FormalConjecturesForMathlib.NumberTheory.DirichletCharacter.Basic
 public import FormalConjecturesForMathlib.NumberTheory.Divisors
+public import FormalConjecturesForMathlib.NumberTheory.GaloisRepresentation
 public import FormalConjecturesForMathlib.NumberTheory.Harmonic
 public import FormalConjecturesForMathlib.NumberTheory.Hecke.AdelicAction
 public import FormalConjecturesForMathlib.NumberTheory.Hecke.GeneralLinearGroup
